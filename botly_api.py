@@ -34,8 +34,8 @@ def get_room_data(room_id):
         return jsonify({"error": "Room not found"}), 404
 
     row = row.iloc[0]
-    room_type = str(row.get("Type of Room", "")).strip()
-    documents_supplied = str(row.get("Documents Supplied", "")).strip() == "כן"
+    room_type = str(row.get("Type of room", "")).strip()
+    documents_supplied = str(row.get("מסמכים סופקו", "")).strip() == "כן"
 
     date_raw = row.get("Commissioning Due Date", "")
     try:
