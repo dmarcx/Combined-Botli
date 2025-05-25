@@ -9,7 +9,6 @@ app = Flask(__name__)
 above = pd.read_excel("Lighting_AboveGround.xlsx")
 below = pd.read_excel("Lighting_BelowGround.xlsx")
 
-
 def get_room_dataframe(room_id):
     if room_id.upper().startswith("L"):
         return above
@@ -17,10 +16,8 @@ def get_room_dataframe(room_id):
         return below
     return None
 
-
 def clean_room_id(room_id):
     return room_id.strip().upper()
-
 
 @app.route("/api/room/<room_id>", methods=["GET"])
 def get_room_data(room_id):
@@ -37,14 +34,16 @@ def get_room_data(room_id):
     room_type = str(row.get("Type of room", "")).strip()
     documents_supplied = str(row.get("מסמכים סופקו", "")).strip() == "כן"
 
-    date_raw = row.get("Commissioning Due Date", "")
-    try:
-        if isinstance(date_raw, pd.Timestamp):
-            due_date = date_raw.date()
-        else:
-            due_date = pd.to_datetime(date_raw, errors="coerce").date()
-    except Exception:
-        due_date = None
+    date_value = row.get("Commissioning Due Date", "")
+    if isinstance(date_value, datetime):
+        due_date = date_value.date()
+    elif isinstance(date_value, pd.Timestamp):
+        due_date = date_value.date()
+    else:
+        try:
+            due_date = datetime.strptime(str(date_value).strip(), "%Y-%m-%d").date()
+        except Exception:
+            due_date = None
 
     return jsonify({
         "room_id": room_id,
@@ -53,7 +52,6 @@ def get_room_data(room_id):
         "commissioning_due_date": due_date.isoformat() if due_date else None,
         "today": datetime.today().date().isoformat()
     })
-
 
 if __name__ == "__main__":
     app.run(debug=True, port=8080)
