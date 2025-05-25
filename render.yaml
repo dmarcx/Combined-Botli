@@ -2,6 +2,9 @@ services:
   - type: web
     name: botli-api
     env: python
-    plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: python botly_api.py
+    startCommand: gunicorn botly_api:app
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10
