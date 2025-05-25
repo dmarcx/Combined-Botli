@@ -34,12 +34,15 @@ def get_room_data(room_id):
         return jsonify({"error": "Room not found"}), 404
 
     row = row.iloc[0]
-    room_type = row.get("Type of Room", "").strip()
-    documents_supplied = row.get("Documents Supplied", "").strip() == "כן"
+    room_type = str(row.get("Type of Room", "")).strip()
+    documents_supplied = str(row.get("Documents Supplied", "")).strip() == "כן"
 
-    date_str = row.get("Commissioning Due Date", "").strip()
+    date_raw = row.get("Commissioning Due Date", "")
     try:
-        due_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        if isinstance(date_raw, pd.Timestamp):
+            due_date = date_raw.date()
+        else:
+            due_date = pd.to_datetime(date_raw, errors="coerce").date()
     except Exception:
         due_date = None
 
