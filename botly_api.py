@@ -5,7 +5,6 @@ import os
 
 app = Flask(__name__)
 
-# Load the Excel files once
 above = pd.read_excel("Lighting_AboveGround.xlsx")
 below = pd.read_excel("Lighting_BelowGround.xlsx")
 
@@ -26,31 +25,38 @@ def get_room_data(room_id):
     if df is None:
         return jsonify({"error": "Invalid room prefix"}), 400
 
-    row = df[df["Room Number"].astype(str).str.upper().str.strip() == room_id]
-    if row.empty:
+    matching_rows = df[df["Room Number"].astype(str).str.upper().str.strip() == room_id]
+    if matching_rows.empty:
         return jsonify({"error": "Room not found"}), 404
 
-    row = row.iloc[0]
-    room_type = str(row.get("Type of room", "")).strip()
-    documents_supplied = str(row.get("מסמכים סופקו", "")).strip() == "כן"
+    # ניקח את השורה הראשונה לסוג חדר ותאריך
+    first_row = matching_rows.iloc[0]
+    room_type = first_row.get("Type of room", "").strip()
+    documents_supplied = str(first_row.get("מסמכים סופקו", "")).strip() == "כן"
 
-    date_value = row.get("Commissioning Due Date", "")
-    if isinstance(date_value, datetime):
-        due_date = date_value.date()
-    elif isinstance(date_value, pd.Timestamp):
-        due_date = date_value.date()
-    else:
-        try:
-            due_date = datetime.strptime(str(date_value).strip(), "%Y-%m-%d").date()
-        except Exception:
-            due_date = None
+    # תאריך
+    date_value = first_row.get("Commissioning Due Date", "")
+    try:
+        due_date = pd.to_datetime(date_value).date()
+    except Exception:
+        due_date = None
+
+    # גופי תאורה
+    fixtures = []
+    for _, row in matching_rows.iterrows():
+        fixtures.append({
+            "family": row.get("Family", "").strip(),
+            "type": row.get("Type", "").strip(),
+            "quantity": int(row.get("Quantity", 0))
+        })
 
     return jsonify({
         "room_id": room_id,
         "room_type": room_type,
         "documents_supplied": documents_supplied,
         "commissioning_due_date": due_date.isoformat() if due_date else None,
-        "today": datetime.today().date().isoformat()
+        "today": datetime.today().date().isoformat(),
+        "fixtures": fixtures
     })
 
 if __name__ == "__main__":
