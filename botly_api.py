@@ -4,6 +4,11 @@ from datetime import datetime
 
 app = Flask(__name__)
 
+@app.route("/health")
+def health():
+    # תשובה קצרה ומהירה • אין גישה לקבצים / DB כאן
+    return "OK", 200
+
 # Load Excel files once
 above = pd.read_excel("Lighting_AboveGround.xlsx")
 below = pd.read_excel("Lighting_BelowGround.xlsx")
